@@ -1,0 +1,14 @@
+name: adventofcode2022
+
+dependencies:
+- base >= 4.7 && < 5
+- unordered-containers
+- vector
+- heap
+- linear
+- parsec
+- hip
+
+library:
+  source-dirs:
+  - lib

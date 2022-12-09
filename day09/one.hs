@@ -1,6 +1,5 @@
 import Text.Parsec
 import Data.List
-import Data.Char
 import Parsing
 import qualified Data.HashMap.Strict as M
 import Chart2d
@@ -12,7 +11,7 @@ readD :: Parser [(Char, Integer)]
 readD = readLine `endBy` newline
   where
     readLine = do
-      c <- choice (map char "RLUD")
+      c <- oneOf "RLUD"
       space
       n <- number
       return (c, n)
@@ -21,42 +20,23 @@ readD = readLine `endBy` newline
 solve :: [(Char, Integer)] -> String
 solve inp = unlines [
   show inp,
-  show $ length (nub visited)
-  --showMC (M.fromList (zip visited $ repeat '#'))
+  show $ length (nub tailPositions),
+  --showMC (M.fromList (zip headPositions $ repeat '#')),
+  --showMC (M.fromList (zip tailPositions $ repeat '#'))
   ]
   where
 
-    move _ _ [] = []
-    move posH posT (i:is) = posTs ++ move (last posHs) (last posTs) is
+    singleMoves = [d | (d, n) <- inp, _ <- [1..n]]
+
+    headPositions = scanl step (0,0) singleMoves
       where
-        posHs = move' i posH
-        
-        move' ('R', n) (x,y) = [(x+k,y) | k <- [0..n]]
-        move' ('L', n) (x,y) = [(x-k,y) | k <- [0..n]]
-        move' ('U', n) (x,y) = [(x,y+k) | k <- [0..n]]
-        move' ('D', n) (x,y) = [(x,y-k) | k <- [0..n]]
+        step (x,y) 'R' = (x+1,y)
+        step (x,y) 'L' = (x-1,y)
+        step (x,y) 'U' = (x,y+1)
+        step (x,y) 'D' = (x,y-1)
 
-        posTs = follow posT posHs
-
-        follow _ [] = []
-        follow tpos (hpos:hs) = tpos' : follow tpos' hs
-          where
-           tpos' = movetail tpos hpos
-
-        movetail (tx, ty) (hx, hy)
-          | ty == hy || tx == hx = (movestraight tx hx, movestraight ty hy)
-          | abs (ty - hy) + abs (tx - hx) <= 2 = (tx, ty)
-          | otherwise = (movediag tx hx, movediag ty hy)
-          where
-            movestraight x1 x2
-              | abs (x1 - x2) <= 1 = x1
-              | x1 < x2 = x1+1
-              | x1 > x2 = x1-1
-            movediag x1 x2
-              | x1 < x2 = x1+1
-              | x1 > x2 = x1-1
-              | otherwise = x1
-
-    visited = move (0,0) (0,0) inp
-
-    
+    tailPositions = scanl follow (0,0) headPositions
+      where
+        follow (tx, ty) (hx, hy)
+          | abs (tx-hx) <= 1 && abs (ty-hy) <= 1 = (tx, ty)
+          | otherwise = (tx + signum (hx-tx), ty + signum (hy-ty))

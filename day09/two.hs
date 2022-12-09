@@ -1,6 +1,5 @@
 import Text.Parsec
 import Data.List
-import Data.Char
 import Parsing
 import qualified Data.HashMap.Strict as M
 import Chart2d
@@ -12,7 +11,7 @@ readD :: Parser [(Char, Integer)]
 readD = readLine `endBy` newline
   where
     readLine = do
-      c <- choice (map char "RLUD")
+      c <- oneOf "RLUD"
       space
       n <- number
       return (c, n)
@@ -21,47 +20,24 @@ readD = readLine `endBy` newline
 solve :: [(Char, Integer)] -> String
 solve inp = unlines [
   show inp,
-  show anss
-  --showMC (M.fromList (zip visited $ repeat '#'))
+  show answers
   ]
   where
+    singleMoves = [d | (d, n) <- inp, _ <- [1..n]]
 
-    posHs = (0,0) : moveI (0,0) inp
-
-    moveI _ [] = []
-    moveI posH (i:is) = posHs ++ moveI (last posHs) is
+    headPositions = scanl step (0,0) singleMoves
       where
-        posHs = move' i posH
-        
-        move' ('R', n) (x,y) = [(x+k,y) | k <- [1..n]]
-        move' ('L', n) (x,y) = [(x-k,y) | k <- [1..n]]
-        move' ('U', n) (x,y) = [(x,y+k) | k <- [1..n]]
-        move' ('D', n) (x,y) = [(x,y-k) | k <- [1..n]]
+        step (x,y) 'R' = (x+1,y)
+        step (x,y) 'L' = (x-1,y)
+        step (x,y) 'U' = (x,y+1)
+        step (x,y) 'D' = (x,y-1)
 
-    move _ [] = []
-    move tpos (hpos:hs) = tpos' : move tpos' hs
+    genTailPositions positions = scanl' follow (0,0) positions
       where
-        tpos' = movetail tpos hpos
+        follow (tx, ty) (hx, hy)
+          | abs (tx-hx) <= 1 && abs (ty-hy) <= 1 = (tx, ty)
+          | otherwise = (tx + signum (hx-tx), ty + signum (hy-ty))
 
-        movetail (tx, ty) (hx, hy)
-          | ty == hy || tx == hx = (movestraight tx hx, movestraight ty hy)
-          | abs (ty - hy) + abs (tx - hx) <= 2 = (tx, ty)
-          | otherwise = (movediag tx hx, movediag ty hy)
-          where
-            movestraight x1 x2
-              | abs (x1 - x2) <= 1 = x1
-              | x1 < x2 = x1+1
-              | x1 > x2 = x1-1
-            movediag x1 x2
-              | x1 < x2 = x1+1
-              | x1 > x2 = x1-1
-              | otherwise = x1
+    tails = iterate genTailPositions headPositions
 
-    visited = (0,0):move (0,0) posHs
-
-
-    genpos poss = newposs : genpos newposs
-      where
-        newposs = (0,0):move (0,0) poss
-
-    anss = take 9 . map (length . nub) $ genpos posHs
+    answers = take 10 . map (length . nub) $ tails

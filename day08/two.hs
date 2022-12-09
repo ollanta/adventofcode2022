@@ -27,23 +27,17 @@ solve inp = unlines [
     height = toInteger $ length inp
 
     scenicdistance (x,y) (dx, dy) v
-      | length trees > lowertrees = lowertrees + 1
-      | otherwise             = lowertrees
+      | null rest = length lowertrees
+      | otherwise = length lowertrees + 1 -- we see the last tree too
       where
-        dir = [(x+n*dx, y+n*dy) | n <- [1..]]
-        cs = takeWhile (\(x,y) -> 0 <= x && x < width && 0 <= y && y < height) dir
+        coords = [(x+n*dx, y+n*dy) | n <- [1..]]
+        trees = [chart M.! c | c <- takeWhile (`M.member` chart) coords]
 
-        trees = map (chart M.!) cs
+        (lowertrees, rest) = span (<v) trees
 
-        lowertrees = length $ takeWhile (<v) trees
+    scenicscore c v = product [scenicdistance c dir v |
+                               dir <- [(1,0), (0,1), (-1,0), (0,-1)]]
 
-    scenicscore c v = product [scenicdistance c (1,0) v,
-                               scenicdistance c (0,1) v,
-                               scenicdistance c (-1,0) v,
-                               scenicdistance c (0,-1) v]
+    scorechart = M.mapWithKey scenicscore chart
 
-    scorechart = M.mapWithKey (scenicscore) chart
-
-    scorelist = M.toList scorechart
-
-    ans = maximum . map snd $ scorelist
+    ans = maximum . M.elems $ scorechart

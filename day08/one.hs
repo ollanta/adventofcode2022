@@ -26,18 +26,15 @@ solve inp = unlines [
     toVisibleChart :: [[Integer]] -> [[Bool]]
     toVisibleChart rows = map (toVisibleRow (-1)) rows
       where
-        toVisibleRow v (t:ts)
-          | v < t = True : toVisibleRow t ts
-          | otherwise = False : toVisibleRow v ts
+        toVisibleRow v (t:ts) = (v < t) : toVisibleRow (max t v) ts
         toVisibleRow _ [] = []
 
-    inps = [toVisibleChart inp,
-            (transpose) (toVisibleChart $ transpose inp),
-            (map reverse) (toVisibleChart $ (map reverse) inp),
-            (transpose . map reverse) (toVisibleChart $ (map reverse . transpose) inp)]
+    rotate :: Int -> [[a]] -> [[a]]
+    rotate 0 rows = rows
+    rotate n rows = rotate (n-1) rotated
+      where
+        rotated = foldr (zipWith (:)) (repeat []) (reverse rows)
 
-    allcharts = map readM inps
+    rotations = [rotate n . toVisibleChart . rotate (4-n) $ inp | n <- [0..3]]
 
-    unionchart = foldl1 (M.unionWith (||)) allcharts
-
-    
+    unionchart = foldl1 (M.unionWith (||)) $ map readM rotations

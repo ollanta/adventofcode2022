@@ -28,3 +28,6 @@ digitAsNumber :: Parser Integer
 digitAsNumber = do
   n <- count 1 digit
   return $ read n
+
+word :: Parser String
+word = many1 letter

@@ -10,35 +10,29 @@ main = optimisticInteract readD solve
 readD :: Parser [(String, Integer)]
 readD = readLine `endBy` newline
   where
-    readLine = choice [readnoop, readaddx]
-
-    readnoop = do
-      string "noop"
-      return ("noop", 0)
-
-    readaddx = do
-      string "addx "
-      n <- mnumber
-      return ("addx", n)
-
+    readLine = do
+      command <- many1 letter
+      many (char ' ')
+      number <- option 0 mnumber
+      return (command, number)
 
 solve inp = unlines [
-  show inp,
-  show . take 7 $ answerOne,
-  show . sum . map (\(c,v) -> c*v) . take 6 $ answerOne
-  ] ++ unlines pixm'
+  show . sum . take 6 $ answerOne
+  ] ++ unlines (splitlines printed)
   where
-    cycs = run 1 1 inp
+    cycs = run 1 inp
 
-    run c v (("noop", _):inps) = (c,v):run (c+1) v inps
-    run c v (("addx", n):inps) = (c,v):(c+1,v):run (c+2) (v+n) inps
-    run c v  [] = [(c,v)]
+    run v (("noop", _):inps) = v:run v inps
+    run v (("addx", n):inps) = v:v:run (v+n) inps
+    run v [] = [v]
 
-    answerOne = filter (\(c,v) -> mod (c-20) 40 == 0) cycs
+    answerOne = [ c*v | (c,v) <- zip [1..] cycs, mod (c-20) 40 == 0]
 
-    pixm =  [if abs (v-p) <= 1 then '#' else '.' | (p,v) <- zip (concat (repeat [0..39])) (map snd cycs)]
-
-    pixm' = takes pixm
+    printed = map draw $ zip [0..] cycs
       where
-        takes [] = []
-        takes l  = (take 40 l) : takes (drop 40 l)
+        draw (p,v)
+          | abs (mod p 40 - v) <= 1 = '#'
+          | otherwise               = '.'
+
+    splitlines [] = []
+    splitlines l  = (take 40 l) : splitlines (drop 40 l)

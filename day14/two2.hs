@@ -20,7 +20,7 @@ readD = readLine `sepEndBy` newline
       return (n1, n2)
 
 solve inp = unlines [
-  show . countSand $ steadyState
+  show . countSand $ findSteady chart
   ]
   where
     chart :: M.HashMap Coord Char
@@ -30,19 +30,23 @@ solve inp = unlines [
 
     height = maximum . map snd $ M.keys chart
 
-    addSand :: Coord -> M.HashMap Coord Char -> M.HashMap Coord Char
-    addSand (x,y) m
-      | y == height+1   = M.insert (x,y) 'o' m
-      | null nextCoords = M.insert (x,y) 'o' m
-      | otherwise       = addSand nextCoord m
+    findSteady :: M.HashMap Coord Char -> M.HashMap Coord Char
+    findSteady m = fst $ addSand (500,0) m
       where
-        nextCoords = [ nc | nx <- [x, x-1, x+1], let nc = (nx, y+1), not (M.member nc m)]
-        nextCoord  = head nextCoords
+        addSand c@(x,y) m
+          | isGround  = (m, True)
+          | holdsSand = (M.insert c 'o' m', True)
+          | otherwise = (m', False)
+          where
+            isGround = y == height+2 || M.member c m
+            (m', holdsSand) = foldl' conditionalFlow (m,True) [(nx, y+1) | nx <- [x, x-1, x+1]]
 
-    states = iterate (addSand (500,0)) chart
-    steadyState = head . dropWhile (not . M.member (500,0)) $ states
+        conditionalFlow (m, willFlow) c
+          | willFlow  = addSand c m
+          | otherwise = (m, False)
 
     countSand = M.size . M.filter (=='o')
+
 
 getCoords (c1@(x1,y1), c2@(x2,y2))
   | c1 > c2  = getCoords (c2, c1)

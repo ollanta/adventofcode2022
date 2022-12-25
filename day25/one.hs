@@ -28,15 +28,13 @@ solve inp = unlines [
       where
         readElfCode rcode = zipWith (*) (iterate (*5) 1) (map readElf rcode)
 
-    revNumb k = reverse $ findN 1 k
+    revNumb k = reverse $ findN k
       where
-        findN _ 0 = []
-        findN p k = writeElf r' : findN p' (k-p*r')
+        findN 0 = []
+        findN k = writeElf r : findN q
           where
-            p' = p*5
-            r = k `rem` p'
-            r' = fixRem (r `div` p)
+            (q, r) = fixRem $ k `quotRem` 5
 
-            fixRem k
-              | k >= 3    = k-5
-              | otherwise = k
+            fixRem (q, r)
+              | r >= 3    = (q+1, r-5)
+              | otherwise = (q, r)

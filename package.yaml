@@ -7,7 +7,6 @@ dependencies:
 - heap
 - linear
 - parsec
-- hip
 
 library:
   source-dirs:

@@ -1,10 +1,8 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.31.2.
+-- This file has been generated from package.yaml by hpack version 0.34.7.
 --
 -- see: https://github.com/sol/hpack
---
--- hash: 886c67a92c7db18485d45883abe9be1140512aee56b56fc2faa040f6b63a2643
 
 name:           adventofcode2022
 version:        0.0.0
@@ -23,7 +21,6 @@ library
   build-depends:
       base >=4.7 && <5
     , heap
-    , hip
     , linear
     , parsec
     , unordered-containers

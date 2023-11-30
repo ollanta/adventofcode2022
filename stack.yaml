@@ -1,4 +1,4 @@
-resolver: lts-14.17
+resolver: lts-20.4
 
 # User packages to be built.
 # Various formats can be used as shown in the example below.
@@ -14,5 +14,5 @@ packages:
 # Extra directories used by stack for building
 # extra-include-dirs: [/path/to/dir]
 # extra-lib-dirs: [/path/to/dir]
-extra-deps:
-- hip-1.5.4.0@sha256:f1a79c096dd5ddf4debbf0b351e20a93232d550c04816f71ae1069df72edc12d,6988
+# extra-deps:
+# - hip-1.5.6.0@sha256:296c55622f62485422c0a593c7306af1a5abf8ba9f866dcdffc281b01eba65d7,6988

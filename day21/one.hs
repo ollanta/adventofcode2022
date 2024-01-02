@@ -1,10 +1,7 @@
 import Text.Parsec
-import Data.List
 import Data.Char
 import Parsing
 import qualified Data.HashMap.Strict as M
-import Chart3d
-import qualified Data.Heap as H
 
 main :: IO ()
 main = optimisticInteract readD solve
@@ -33,29 +30,26 @@ solve inp = unlines [
   ]
   where
     inlength = toInteger $ length inp
-    
 
     solve :: [(String, Either Integer (Char,String,String))] -> M.HashMap String (Either Integer (Char,String,String))
     solve i = solve' M.empty (M.fromList i)
       where
-        solve' known rest
-          | M.null rest = known
-          | otherwise    = solve' known' rest''
+        solve' known unknown
+          | M.null unknown = known
+          | otherwise      = solve' known' unknown'
           where
-            rest' = M.map tr rest
+            reduced = M.map tryReduce unknown
 
-            nowknown = M.filter isKnown rest'
-
-            known' = M.union known nowknown
-            rest'' = M.difference rest' nowknown
+            known' = M.union known $ M.filter isKnown reduced
+            unknown' = M.filter (not . isKnown) reduced
 
             calc '+' (Left n1) (Left n2) = n1 + n2
             calc '*' (Left n1) (Left n2) = n1 * n2
             calc '/' (Left n1) (Left n2) = div n1 n2
             calc '-' (Left n1) (Left n2) = n1 - n2
 
-            tr (Left n) = Left n
-            tr (Right (op, a, b))
+            tryReduce (Left n) = Left n
+            tryReduce (Right (op, a, b))
               | a `M.member` known && b `M.member` known = Left $ calc op (known M.! a) (known M.! b)
               | otherwise = Right (op, a, b)
 

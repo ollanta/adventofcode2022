@@ -34,7 +34,7 @@ solve inp = unlines [
   where
     inlength = toInteger $ length inp
     
-    (solved,known) = solve inp
+    (solved, known) = solve inp
     allsk = M.union solved known
 
     Right (_, left, right) = solved M.! "root"
@@ -65,7 +65,6 @@ solve inp = unlines [
         reduce '*' a (Left v) = (a, div k v)
         reduce '/' (Left v) b = (b, div v k)
         reduce '/' a (Left v) = (a, k * v)
-
 
     solve :: [(String, Either Integer (Char,String,String))] -> (M.HashMap String (Either Integer (Char,String,String)), M.HashMap String (Either Integer (Char,String,String)))
     solve i = solve' M.empty minit''

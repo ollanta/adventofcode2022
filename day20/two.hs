@@ -1,5 +1,4 @@
 import Text.Parsec
-import Data.List
 import Data.Char
 import Parsing
 import qualified Data.HashMap.Strict as M
@@ -17,7 +16,6 @@ solve inp = unlines [
   show $ inp
   , show $ grovec
   , show $ sum grovec
-  --, show . sum . map (\(a,b) -> a*b) $ anss
   ]
   where
     inlength = toInteger $ length inp
@@ -34,27 +32,28 @@ solve inp = unlines [
 
         mixedm = M.fromList mixed
 
-    mix nums = mix' 10 [(i, i, n, False) | (i,n) <- zip [0..] nums]
+    mix nums = (!!10) . iterate (mix' . toTriple) $ zip [0..] nums
       where
-        mix' k m
-          | k == 0        = curr
-          | null notMoved = mix' (k-1) [(i, o, n, False) | (i, o, n, b) <- m]
-          | otherwise     = mix' k m'
-          where
-            curr = [ (i,n) | (i, order, n, b) <- sort m]
+        toTriple = map (\(a, b) -> (a, b, False))
 
-            notMoved = [(order, i, n) |
-                        (i, order, n, moved) <- m,
+        mix' m
+          | null notMoved = curr
+          | otherwise     = mix' m'
+          where
+            curr = [ (i,n) | (i, n, b) <- m]
+
+            notMoved = [(i, n) |
+                        (i, n, moved) <- m,
                         not moved]
-            (mo, mi, mn) = minimum notMoved
+            (mi, mn) = head notMoved
 
             newi = (mi+mn) `mod` (inlength-1)
 
             m' = map updateI m
             
-            updateI (i, o, n, b)
-              | i == mi = (newi, o, n, True)
-              | i < mi && i < newi = (i, o, n, b)
-              | i < mi && i >= newi = (i+1, o, n, b)
-              | i > mi && i <= newi = (i-1, o, n, b)
-              | i > mi && i > newi  = (i, o, n, b)
+            updateI (i, n, b)
+              | i == mi = (newi, n, True)
+              | i < mi && i < newi = (i, n, b)
+              | i < mi && i >= newi = (i+1, n, b)
+              | i > mi && i <= newi = (i-1, n, b)
+              | i > mi && i > newi  = (i, n, b)

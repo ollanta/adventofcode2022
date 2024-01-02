@@ -20,12 +20,11 @@ solve inp = unlines [
   , unlines . map show $ mix inp
   , show $ grovec
   , show $ sum grovec
-  --, show . sum . map (\(a,b) -> a*b) $ anss
   ]
   where
     inlength = toInteger $ length inp
 
-    mixed = last $ mix inp
+    mixed = mix inp
 
     grovec = [mixedm M.! getI n | n <- [1000,2000,3000]]
       where
@@ -38,15 +37,15 @@ solve inp = unlines [
     mix nums = mix' [(i, n, False) | (i,n) <- zip [0..] nums]
       where
         mix' m
-          | null notMoved = [curr]
+          | null notMoved = curr
           | otherwise     = mix' m'
           where
-            curr = [ (i,n) | (i, n, b) <- sort m]
+            curr = [ (i,n) | (i, n, b) <- m]
 
             notMoved = [(i, n) |
                         (i, n, moved) <- m,
                         not moved]
-            (mi, mn) = minimum notMoved
+            (mi, mn) = head notMoved
 
             newi = (mi+mn) `mod` (inlength-1)
 

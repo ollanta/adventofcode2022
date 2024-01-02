@@ -39,17 +39,11 @@ solve inp = unlines [
                     elf <- M.keys elves,
                     any (=='#') [M.lookupDefault '.' neigh ch | neigh <- neighbours8 elf]]
 
-        consider (dx,dy) elf@(ex,ey)
-          | (dx,dy) == (0,-1) = all (=='.') north
-          | (dx,dy) == (0,1)  = all (=='.') south
-          | (dx,dy) == (-1,0) = all (=='.') west
-          | (dx,dy) == (1,0)  = all (=='.') east
+        consider (dx,dy) elf@(ex,ey) = all (=='.') [M.lookupDefault '.' (x',y') ch | x' <- toRange dx ex, y' <- toRange dy ey]
           where
-            neighs = [(neigh, M.lookupDefault '.' neigh ch) | neigh <- neighbours8 elf]
-            north = [ c | ((x,y),c) <- neighs, y < ey]
-            south = [ c | ((x,y),c) <- neighs, y > ey]
-            west = [ c | ((x,y),c) <- neighs, x < ex]
-            east = [ c | ((x,y),c) <- neighs, x > ex]
+            -- Ease generation of all neighbours to the E/W/N/S
+            toRange 0 x = [x-1..x+1]
+            toRange k x = [x+k]
             
         getMove elf = head $ [ add elf delta | delta <- take 4 mvs, consider delta elf] ++ [elf]
 

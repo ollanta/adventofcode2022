@@ -1,5 +1,4 @@
 import Text.Parsec
-import Data.List
 import Data.Char
 import Parsing
 import qualified Data.HashMap.Strict as M
@@ -48,16 +47,15 @@ solve inp = unlines [
           where
             visited' = M.union visited (M.fromList $ zip poss (repeat True))
             poss' = [ pos | pos <- concatMap findNeighs poss, not (M.member pos visited')]
-            
 
-    findNeighs pos = snd $ chart M.! pos
+        findNeighs pos = snd $ chart M.! pos
 
     paths = M.fromList [ (valve, [ (otherValve, shortestPath valve otherValve) | (otherValve, _) <- interesting, valve /= otherValve]) |
                          (valve, flow) <- interesting]
     flows = M.fromList interesting
 
-    initHeap :: H.MaxPrioHeap Integer (Integer, Integer, String, Integer, String, [String])
-    initHeap = H.fromList [(maxM * calcFlow [], (0, 0, "AA", 0, "AA", ["AA"]))]
+    initHeap :: H.MaxPrioHeap Integer (Integer, (Integer, String), (Integer, String), [String])
+    initHeap = H.fromList [(maxM * calcFlow [], (0, (0, "AA"), (0, "AA"), ["AA"]))]
 
     maxM = 26
     minutesLeft m = max (maxM-m) 0
@@ -66,35 +64,31 @@ solve inp = unlines [
 
     closedFlow = calcFlow . map fst $ interesting
 
-    findFlow :: H.MaxPrioHeap Integer (Integer, Integer, String, Integer, String, [String]) -> (Integer, (Integer, Integer, String, Integer, String, [String]))
+    findFlow :: H.MaxPrioHeap Integer (Integer, (Integer, String), (Integer, String), [String]) -> (Integer, (Integer, (Integer, String), (Integer, String), [String]))
     findFlow prioh
-      | length openValves == length interesting = (potential, state)--totalFlow
-      | minutes1 <= minutes2 = findFlow $ moveFirst
-      | otherwise            = findFlow $ moveSecnd -- findFlow (H.union prioh' $ H.fromList goToOther)
+      | length openValves == length interesting = (potential, state)
+      | otherwise            = findFlow prioh''
       where
         Just ((potential, state), prioh') = H.view prioh
-        (totalFlow, minutes1, pos1, minutes2, pos2, openValves) = state
+        (totalFlow, actor1, actor2, openValves) = state
+        nextActor = min actor1 actor2
+        lastActor = max actor1 actor2
 
-        moveFirst = H.union prioh' $ H.fromList [(prio, (flow, m1, p1, minutes2, pos2, open)) | (prio, (flow, m1, p1, open)) <- moveFrom minutes1 pos1]
-        moveSecnd = H.union prioh' $ H.fromList [(prio, (flow, minutes1, pos1, m2, p2, open)) | (prio, (flow, m2, p2, open)) <- moveFrom minutes2 pos2]
+        prioh'' = H.union prioh' $ H.fromList [(prio, (flow, actor', lastActor, open)) | (prio, (flow, actor', open)) <- moveFrom nextActor]
 
-        potentialFlow open = sum [ flows M.! valve * minutesLeft (minute) | (valve, minute) <- M.toList nexts ]
+        potentialFlow actors open = sum [ flows M.! valve * minutesLeft minute | (valve, minute) <- M.toList nextMoves ]
           where
-            nexts = M.fromListWith min [(valve, minute+dist+1) |
-                                         (minute, pos) <- [(minutes1, pos1), (minutes2, pos2)],
-                                         (valve, dist) <- paths M.! pos,
-                                         not (valve `elem` open)]
-                              
+            nextMoves = M.fromListWith min [(valve, minute+dist+1) |
+                                            (minute, pos) <- actors,
+                                            (valve, dist) <- paths M.! pos,
+                                            not (valve `elem` open)]
 
-        moveFrom minutes pos = goToOther
+        moveFrom (minutes, pos) = goToOther
           where
-            neighs = paths M.! pos
-            flow = flows M.! pos
+            leftToOpen = [(next, k) | (next, k) <- paths M.! pos, not (elem next openValves)]
 
-            leftToOpen = [(next, k) | (next, k) <- neighs, not (elem next openValves)]
-
-            goToOther = [ (totalFlow' + potentialFlow openValves',
-                           (totalFlow', minutes', next, openValves'))
+            goToOther = [ (totalFlow' + potentialFlow [(minutes', next), lastActor] openValves',
+                           (totalFlow', (minutes', next), openValves'))
                         | (next, k) <- leftToOpen,
                           let minutes' = minutes+k+1,
                           let flowAtNext = flows M.! next,
